@@ -26,8 +26,8 @@ public class PayloadsWrapper {
         }
     }
 
-    public void setActionProps(String action, Object ...objects) {
-        this.payloads.put(action, objects);
+    public void setActionProps(String action, Object ...immutableProps) {
+        this.payloads.put(action, immutableProps);
     }
 
     public Object[] getActionProps(String action) {

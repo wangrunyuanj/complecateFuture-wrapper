@@ -1,7 +1,6 @@
 package com.runyuanj.wrapper;
 
 import com.runyuanj.register.ActionRegister;
-import com.runyuanj.register.PayloadsWrapper;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -10,15 +9,13 @@ import java.util.function.Supplier;
 public class CompletableFutureWrapper {
 
     public ActionRegister register;
-    public PayloadsWrapper payloads;
 
-    public CompletableFutureWrapper (ActionRegister register, PayloadsWrapper payloads){
+    public CompletableFutureWrapper (ActionRegister register){
         this.register = register;
-        this.payloads = payloads;
     }
 
     public <U, T> CompletableFuture<U> then(String action, CompletableFuture<T> future, Object... objects) {
-        payloads.setActionProps(action, objects);
+        register.getPayloads().setActionProps(action, objects);
         return future.thenApplyAsync(register.getFunction(action));
     }
 
@@ -31,7 +28,7 @@ public class CompletableFutureWrapper {
         } catch (InterruptedException e) {
             throw new InterruptedException(action + " throws InterruptedException");
         }
-        payloads.setActionProps(action, t, objects);
+        register.getPayloads().setActionProps(action, t, objects);
         return future.thenApplyAsync(register.getFunction(action));
     }
 
@@ -41,7 +38,7 @@ public class CompletableFutureWrapper {
     }
 
     public <T> CompletableFuture<T> call(String action, Object... objects) {
-        payloads.setActionProps(action, objects);
+        register.getPayloads().setActionProps(action, objects);
 
         Supplier<T> supplier = register.getSupplier(action);
         return CompletableFuture.supplyAsync(supplier);
@@ -52,7 +49,7 @@ public class CompletableFutureWrapper {
     }
 
     public void destroy() {
-        this.payloads.destroy();
+        this.register.getPayloads().destroy();
         this.register = null;
     }
 }

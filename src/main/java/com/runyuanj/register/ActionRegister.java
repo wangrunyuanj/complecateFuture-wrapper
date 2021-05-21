@@ -12,11 +12,17 @@ import java.util.function.Supplier;
  */
 public class ActionRegister {
 
-    private Map<String, Supplier> map = new HashMap<>();
+    private Map<String, Supplier> map;
 
-    private Map<String, Function> functions = new HashMap<>();
+    private Map<String, Function> functions;
 
-    private Map<String, Object[]> payloads = new HashMap<>();
+    private PayloadsWrapper payloads;
+
+    public ActionRegister() {
+        this.map = new HashMap<>();
+        this.functions = new HashMap<>();
+        this.payloads = new PayloadsWrapper();
+    }
 
     public <T> void register(String action, Supplier<T> supplier) {
         if (map.get(action) != null) {
@@ -38,6 +44,14 @@ public class ActionRegister {
 
     public <T, R> Function<T, R> getFunction(String action) {
         return functions.get(action);
+    }
+
+    public <T> T take(String name, Integer index, Class<T> type) {
+        return payloads.take(name, index, type);
+    }
+
+    public PayloadsWrapper getPayloads() {
+        return this.payloads;
     }
 
 //    public <T> T param(String action, PayloadsWrapper payloads, Integer index, Class<T> type) {

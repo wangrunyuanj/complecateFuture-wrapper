@@ -2,7 +2,6 @@ package com.runyuanj;
 
 import com.runyuanj.model.*;
 import com.runyuanj.register.ActionRegister;
-import com.runyuanj.register.PayloadsWrapper;
 import com.runyuanj.wrapper.CompletableFutureWrapper;
 
 import java.util.concurrent.CompletableFuture;
@@ -10,24 +9,27 @@ import java.util.concurrent.ExecutionException;
 
 public class SimplifyCompletableFuture {
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        PayloadsWrapper payloads = new PayloadsWrapper(16);
-        ActionRegister register = new ActionRegister();
-        CompletableFutureWrapper wrapper = new CompletableFutureWrapper(register, payloads);
+    private static ActionRegister register = new ActionRegister();
+
+    public static void createRegister() {
         register.register("actionA", () -> fetchA());
         register.register("actionB", () -> fetchB());
         register.register("actionF", () -> fetchF());
         register.registerFunctions("actionD", info -> fetchD());
-        register.register("actionM", () -> fetchM(payloads.take("actionM", 0, String.class)));
+        register.register("actionM", () -> fetchM(register.take("actionM", 0, String.class)));
         register.registerFunctions("actionN", info -> fetchN());
-        register.registerFunctions("actionE", info -> fetchE(payloads.take("actionE", 0, DInfo.class)));
+        register.registerFunctions("actionE", info -> fetchE(register.take("actionE", 0, DInfo.class)));
         register.register("actionC", () -> {
-                    System.out.println(payloads.take("actionC", 2, String.class));
-                    return fetchC(
-                            payloads.take("actionC", 0, AInfo.class),
-                            payloads.take("actionC", 1, BInfo.class),
-                            payloads.take("actionC", 2, String.class));
+            System.out.println(register.take("actionC", 2, String.class));
+            return fetchC(
+                    register.take("actionC", 0, AInfo.class),
+                    register.take("actionC", 1, BInfo.class),
+                    register.take("actionC", 2, String.class));
         });
+    }
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        CompletableFutureWrapper wrapper = new CompletableFutureWrapper(register);
 
         long start = System.currentTimeMillis();
 
