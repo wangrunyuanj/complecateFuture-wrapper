@@ -11,7 +11,7 @@ public class SimplifyCompletableFuture {
 
     private static ActionRegister register = new ActionRegister();
 
-    public static void createRegister() {
+    public static void register() {
         register.register("actionA", () -> fetchA());
         register.register("actionB", () -> fetchB());
         register.register("actionF", () -> fetchF());
