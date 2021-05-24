@@ -11,18 +11,19 @@ import java.util.concurrent.ExecutionException;
 
 import static com.runyuanj.util.ActionUtil.GET_ACTION_FUTURE;
 
+/**
+ * 封装CompletableFuture
+ */
 public class ActuatorWrapper {
 
     private ActionDefinitionContainer container;
 
+    private ActuatorWrapper() {}
+
     public static ActuatorWrapper build(ActionDefinitionContainer container) {
         ActuatorWrapper wrapper = new ActuatorWrapper();
-        wrapper.setContainer(container);
+        wrapper.container = container;
         return wrapper;
-    }
-
-    public void setContainer(ActionDefinitionContainer container) {
-        this.container = container;
     }
 
     public ActuatorWrapper call(String... names) {
@@ -30,13 +31,13 @@ public class ActuatorWrapper {
         return this;
     }
 
-    public ActuatorWrapper after(String then, Object... props) {
-        Action beforeAction = container.getBeforeAction();
+    public ActuatorWrapper andThen(String then, Object... props) {
+        Action beforeAction = container.getLastAction();
         return then(then, beforeAction.getName(), props);
     }
 
-    public ActuatorWrapper afterOfSelf(String then, Object... props) throws ExecutionException, InterruptedException {
-        Action beforeAction = container.getBeforeAction();
+    public ActuatorWrapper andThenOfSelf(String then, Object... props) throws ExecutionException, InterruptedException {
+        Action beforeAction = container.getLastAction();
         CompletableFuture future = container.getFuture(beforeAction.getName());
         Object result = future.get();
         return then(then, beforeAction.getName(), result, props);
@@ -49,8 +50,7 @@ public class ActuatorWrapper {
 
         CompletableFuture resultFuture = future.thenApplyAsync(action.getAction());
         container.saveResults(then, resultFuture);
-        container.setResultCursor(resultFuture);
-        container.setBeforeAction(action);
+        container.setLastAction(action);
         return this;
     }
 
@@ -64,6 +64,7 @@ public class ActuatorWrapper {
         SupplierAction action = container.getCallAction(name);
         CompletableFuture future = CompletableFuture.supplyAsync(action.getAction());
         container.saveResults(name, future);
+        container.setLastAction(action);
         return this;
     }
 
@@ -86,7 +87,7 @@ public class ActuatorWrapper {
         action.setProps(newProps);
         CompletableFuture result = CompletableFuture.supplyAsync(action.getAction());
         container.saveResults(name, result);
-        container.setBeforeAction(action);
+        container.setLastAction(action);
         return this;
     }
 

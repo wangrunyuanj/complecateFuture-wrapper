@@ -27,13 +27,4 @@ public class SupplierAction<T> implements Action {
         this.props = props;
     }
 
-    public Object[] getProps() {
-        return props;
-    }
-
-    @Override
-    public Supplier<T> getAction() {
-        return this.action;
-    }
-
 }

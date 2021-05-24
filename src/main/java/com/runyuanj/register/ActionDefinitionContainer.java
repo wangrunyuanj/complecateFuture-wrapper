@@ -11,7 +11,11 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * 需要包含namespace
+ * 容纳了任务执行所需的环境
+ * 包括定义的functions和suppliers,
+ * 每一个action执行的Future,
+ * 以及最后一个action.
+ * 使用close()返回结果, 并清空记录的最后一个action
  */
 public class ActionDefinitionContainer {
 
@@ -21,9 +25,7 @@ public class ActionDefinitionContainer {
 
     private Map<String, CompletableFuture> results = new HashMap<>();
 
-    private Action beforeAction;
-
-    private CompletableFuture endCursor = null;
+    private Action lastAction;
 
     public ActionDefinitionContainer addSupplier(SupplierAction... actions) {
         // name不能重复
@@ -53,29 +55,24 @@ public class ActionDefinitionContainer {
         return results.get(name);
     }
 
-    public void setResultCursor(CompletableFuture resultFuture) {
-        this.endCursor = resultFuture;
-    }
-
-    public CompletableFuture close() {
-        if (endCursor == null) {
-            throw new RuntimeException("请使用getResult(String actionName)");
-        }
-        CompletableFuture future = this.endCursor;
-        this.endCursor = null;
-        this.beforeAction = null;
-        return future;
-    }
-
     public CompletableFuture getResult(String name) {
         return this.results.get(name);
     }
 
-    public Action getBeforeAction() {
-        return this.beforeAction;
+    public Action getLastAction() {
+        return this.lastAction;
     }
 
-    public void setBeforeAction(Action action) {
-        this.beforeAction = action;
+    public void setLastAction(Action action) {
+        this.lastAction = action;
+    }
+
+    public CompletableFuture close() {
+        if (lastAction == null) {
+            throw new RuntimeException("lastAction is null");
+        }
+        CompletableFuture future = this.results.get(lastAction.getName());
+        this.lastAction = null;
+        return future;
     }
 }

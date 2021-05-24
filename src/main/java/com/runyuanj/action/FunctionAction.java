@@ -22,14 +22,4 @@ public class FunctionAction<T, R> implements Action {
         this.name = name;
         this.props = props;
     }
-
-    @Override
-    public Function getAction() {
-        return this.action;
-    }
-
-    public Function getFunction() {
-        return this.action;
-    }
-
 }

@@ -14,11 +14,12 @@ import static com.runyuanj.util.ActionUtil.getFuture;
 public class ActionTest {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        ActionDefinitionContainer container = new ActionDefinitionContainer();
+        // 定义Action
         SupplierAction<AInfo> actionA = new SupplierAction<>("actionA", () -> fetchA());
         SupplierAction<BInfo> actionB = new SupplierAction<>("actionB", () -> fetchB());
 
         SupplierAction actionC = new SupplierAction("actionC");
+        // fetchC(): a.say(), b.say()
         actionC.setAction(() -> fetchC((AInfo) actionC.getProps()[0], (BInfo) actionC.getProps()[1], (String) actionC.getProps()[2]));
 
         FunctionAction actionD = new FunctionAction("actionD", (info) -> {
@@ -31,17 +32,19 @@ public class ActionTest {
             return fetchE(d); // d.say()
         });
 
+        // 添加到容器
+        ActionDefinitionContainer container = new ActionDefinitionContainer();
         container.addSupplier(actionA, actionB, actionC).addFunction(actionD, actionE);
 
         // 执行
-        CompletableFuture close = ActuatorWrapper.build(container)
+        CompletableFuture result = ActuatorWrapper.build(container)
                 .call("actionA", "actionB")
                 .callOfParam("actionC", getFuture("actionA"), getFuture("actionB"), "name-c")
-                .after("actionD")
-                .after("actionE")
+                .andThen("actionD")
+                .andThen("actionE")
                 .close();
 
-        EInfo e = (EInfo) close.get();
+        EInfo e = (EInfo) result.get();
         e.say();
     }
 
