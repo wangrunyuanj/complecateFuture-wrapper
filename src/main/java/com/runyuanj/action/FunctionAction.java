@@ -9,6 +9,10 @@ import java.util.function.Function;
 @NoArgsConstructor
 public class FunctionAction<T, R> implements Action {
 
+    private String name;
+    private Function<T, R> action;
+    private Object[] props;
+
     public FunctionAction(String name, Function<T, R> action) {
         this.name = name;
         this.action = action;
@@ -18,12 +22,6 @@ public class FunctionAction<T, R> implements Action {
         this.name = name;
         this.props = props;
     }
-
-    private String name;
-
-    private Function<T, R> action;
-
-    private Object[] props;
 
     @Override
     public Function getAction() {

@@ -2,7 +2,6 @@ package com.runyuanj.action;
 
 /**
  * 需要包含namespace
- *
  */
 public interface Action {
 
@@ -12,5 +11,5 @@ public interface Action {
 
     Object[] getProps();
 
-    void setProps(Object ...props);
+    void setProps(Object... props);
 }

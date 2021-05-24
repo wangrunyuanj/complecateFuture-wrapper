@@ -3,7 +3,6 @@ package com.runyuanj.wrapper;
 import com.runyuanj.action.Action;
 import com.runyuanj.action.FunctionAction;
 import com.runyuanj.action.SupplierAction;
-import com.runyuanj.model.CInfo;
 import com.runyuanj.register.ActionDefinitionContainer;
 
 import java.util.Arrays;

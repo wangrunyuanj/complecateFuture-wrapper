@@ -9,11 +9,15 @@ import java.util.function.Supplier;
 @NoArgsConstructor
 public class SupplierAction<T> implements Action {
 
+    private String name;
+    private Supplier<T> action;
+    private Object[] props;
+
     public SupplierAction(String name) {
         this.name = name;
     }
 
-    public SupplierAction(String name, Supplier<T> supplier ) {
+    public SupplierAction(String name, Supplier<T> supplier) {
         this.name = name;
         this.action = supplier;
     }
@@ -22,12 +26,6 @@ public class SupplierAction<T> implements Action {
         this.name = name;
         this.props = props;
     }
-
-    private String name;
-
-    private Supplier<T> action;
-
-    private Object[] props;
 
     public Object[] getProps() {
         return props;

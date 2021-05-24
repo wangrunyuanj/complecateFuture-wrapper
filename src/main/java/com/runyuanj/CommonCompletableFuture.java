@@ -33,7 +33,7 @@ public class CommonCompletableFuture {
         NInfo nInfo = rn.get();
         DInfo dInfo = rd.get();
         CompletableFuture<FInfo> rf = CompletableFuture.supplyAsync(() -> {
-            if ((eInfo.getName() == "E" )&& (nInfo.getName() == "N" ) && (dInfo.getName() == "D" )) {
+            if ((eInfo.getName() == "E") && (nInfo.getName() == "N") && (dInfo.getName() == "D")) {
                 return fetchF();
             } else {
                 throw new RuntimeException("-error");
@@ -44,7 +44,6 @@ public class CommonCompletableFuture {
         CompletableFuture<FInfo> rrf = CompletableFuture.supplyAsync(() -> fetchF());
         rrf.get().say();
     }
-
 
 
     public static AInfo fetchA() {
