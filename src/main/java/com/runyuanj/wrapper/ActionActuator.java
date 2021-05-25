@@ -14,36 +14,36 @@ import static com.runyuanj.util.ActionUtil.GET_ACTION_FUTURE;
 /**
  * 封装CompletableFuture
  */
-public class ActuatorWrapper {
+public class ActionActuator {
 
     private ActionDefinitionContainer container;
 
-    private ActuatorWrapper() {}
+    private ActionActuator() {}
 
-    public static ActuatorWrapper build(ActionDefinitionContainer container) {
-        ActuatorWrapper wrapper = new ActuatorWrapper();
-        wrapper.container = container;
-        return wrapper;
+    public static ActionActuator build(ActionDefinitionContainer container) {
+        ActionActuator actuator = new ActionActuator();
+        actuator.container = container;
+        return actuator;
     }
 
-    public ActuatorWrapper call(String... names) {
+    public ActionActuator call(String... names) {
         Arrays.stream(names).forEach((name) -> call(name));
         return this;
     }
 
-    public ActuatorWrapper andThen(String then, Object... props) {
+    public ActionActuator andThen(String then, Object... props) {
         Action beforeAction = container.getLastAction();
         return then(then, beforeAction.getName(), props);
     }
 
-    public ActuatorWrapper andThenOfSelf(String then, Object... props) throws ExecutionException, InterruptedException {
+    public ActionActuator andThenOfSelf(String then, Object... props) throws ExecutionException, InterruptedException {
         Action beforeAction = container.getLastAction();
         CompletableFuture future = container.getFuture(beforeAction.getName());
         Object result = future.get();
         return then(then, beforeAction.getName(), result, props);
     }
 
-    public ActuatorWrapper then(String then, String before, Object... props) {
+    public ActionActuator then(String then, String before, Object... props) {
         CompletableFuture future = container.getFuture(before);
         FunctionAction action = container.getThenAction(then);
         action.setProps(props);
@@ -54,13 +54,13 @@ public class ActuatorWrapper {
         return this;
     }
 
-    public ActuatorWrapper thenOfSelf(String then, String before, Object... props) throws ExecutionException, InterruptedException {
+    public ActionActuator thenOfSelf(String then, String before, Object... props) throws ExecutionException, InterruptedException {
         CompletableFuture future = container.getFuture(before);
         Object result = future.get();
         return then(then, before, result, props);
     }
 
-    public ActuatorWrapper call(String name) {
+    public ActionActuator call(String name) {
         SupplierAction action = container.getCallAction(name);
         CompletableFuture future = CompletableFuture.supplyAsync(action.getAction());
         container.saveResults(name, future);
@@ -68,16 +68,16 @@ public class ActuatorWrapper {
         return this;
     }
 
-    public ActuatorWrapper callOfParam(String name, Object... props) throws ExecutionException, InterruptedException {
+    public ActionActuator callOfParam(String name, Object... props) throws ExecutionException, InterruptedException {
         SupplierAction action = container.getCallAction(name);
         Object[] newProps = new Object[props.length];
         if (props != null && props.length > 0) {
             for (int i = 0; i < props.length; i++) {
                 Object prop = props[i];
-                if (prop instanceof String) {
+                if (prop != null && prop instanceof String) {
                     if (((String) prop).startsWith(GET_ACTION_FUTURE)) {
                         CompletableFuture future = container.getFuture(((String) prop).substring(6));
-                        newProps[i] = future.get();
+                        newProps[i] = future == null ? null : future.get();
                         continue;
                     }
                 }
@@ -95,7 +95,10 @@ public class ActuatorWrapper {
         return container.getResult(name);
     }
 
-    public CompletableFuture close() {
-        return container.close();
+    public CompletableFuture closeBranch() {
+        if (container != null) {
+            return container.closeBranch();
+        }
+        return null;
     }
 }

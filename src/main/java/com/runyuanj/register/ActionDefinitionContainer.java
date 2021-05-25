@@ -28,23 +28,76 @@ public class ActionDefinitionContainer {
     private Action lastAction;
 
     public ActionDefinitionContainer addSupplier(SupplierAction... actions) {
+        if (actions == null) {
+            throw new RuntimeException("Action is null!");
+        }
         // name不能重复
-        Arrays.stream(actions).forEach((action) -> this.suppliers.put(action.getName(), action));
+        Arrays.stream(actions).forEach((action) -> {
+            validateAction(action);
+            this.suppliers.put(action.getName(), action);
+        });
         return this;
     }
 
     public ActionDefinitionContainer addFunction(FunctionAction... actions) {
         // name不能重复
-        Arrays.stream(actions).forEach((action) -> this.functions.put(action.getName(), action));
+        Arrays.stream(actions).forEach((action) -> {
+            validateAction(action);
+            this.functions.put(action.getName(), action);
+        });
         return this;
     }
 
+    private void validateAction(Action action) {
+        if (action == null) {
+            throw new RuntimeException("Action " + action.getName() + " can't be null");
+        }
+        if (this.suppliers.containsKey(action.getName())) {
+            throw new RuntimeException("SupplierAction " + action.getName() + " already exists");
+        }
+        if (this.functions.containsKey(action.getName())) {
+            throw new RuntimeException("FunctionAction " + action.getName() + " already exists");
+        }
+    }
+
     public FunctionAction getThenAction(String name) {
-        return functions.get(name);
+        return this.validateAndGetFunctionAction(name);
     }
 
     public SupplierAction getCallAction(String name) {
-        return suppliers.get(name);
+        return this.validateAndGetSupplierAction(name);
+    }
+
+    private FunctionAction validateAndGetFunctionAction(String name) {
+        if (!functions.containsKey(name)) {
+            if (suppliers.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a SupplierAction!");
+            }
+            throw new RuntimeException("Action " + name + " not in container");
+        } else {
+            FunctionAction action = functions.get(name);
+            if (action == null) {
+                throw new RuntimeException("Action " + name + " is null");
+            } else {
+                return action;
+            }
+        }
+    }
+
+    private SupplierAction validateAndGetSupplierAction(String name) {
+        if (!suppliers.containsKey(name)) {
+            if (functions.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a FunctionAction!");
+            }
+            throw new RuntimeException("Action " + name + " not in container");
+        } else {
+            SupplierAction action = suppliers.get(name);
+            if (action == null) {
+                throw new RuntimeException("Action " + name + " is null");
+            } else {
+                return action;
+            }
+        }
     }
 
     public void saveResults(String name, CompletableFuture<Object> future) {
@@ -67,7 +120,11 @@ public class ActionDefinitionContainer {
         this.lastAction = action;
     }
 
-    public CompletableFuture close() {
+    /**
+     *
+     * @return
+     */
+    public CompletableFuture closeBranch() {
         if (lastAction == null) {
             throw new RuntimeException("lastAction is null");
         }

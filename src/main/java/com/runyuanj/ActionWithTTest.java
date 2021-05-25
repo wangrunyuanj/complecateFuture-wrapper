@@ -11,25 +11,34 @@ import java.util.concurrent.ExecutionException;
 
 import static com.runyuanj.util.ActionUtil.getFuture;
 
-public class ActionTest {
+public class ActionWithTTest {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        // 定义Action
-        SupplierAction<AInfo> actionA = new SupplierAction<>("actionA", () -> fetchA());
-        SupplierAction<BInfo> actionB = new SupplierAction<>("actionB", () -> fetchB());
+        // 定义Action, 不需要带泛型
+        SupplierAction actionA = new SupplierAction<>("actionA", () -> fetchA());
+        SupplierAction actionB = new SupplierAction<>("actionB", () -> fetchB());
 
-        SupplierAction actionC = new SupplierAction("actionC");
-        // fetchC(): a.say(), b.say()
-        actionC.setAction(() -> fetchC((AInfo) actionC.getProps()[0], (BInfo) actionC.getProps()[1], (String) actionC.getProps()[2]));
+        // lambda的调用主体必须带泛型
+        // <CInfo> in left is necessary
+        SupplierAction<CInfo> actionC = new SupplierAction("actionC");
+        actionC.setAction(() -> fetchC(
+                // fetchC(): a.say(), b.say()
+                actionC.getProp(0, AInfo.class),
+                actionC.getProp(1, BInfo.class),
+                actionC.getProp(2, String.class)
+        ));
 
-        FunctionAction actionD = new FunctionAction("actionD", (info) -> {
-            CInfo c = (CInfo) info;
+        // <CInfo, DInfo> in right is necessary
+        FunctionAction actionD = new FunctionAction<CInfo, DInfo>("actionD", (c) -> {
             c.say();
             return fetchD();
         });
-        FunctionAction actionE = new FunctionAction("actionE", (info) -> {
-            DInfo d = (DInfo) info;
-            return fetchE(d); // d.say()
+
+        // <DInfo, EInfo> in left is necessary
+        FunctionAction<DInfo, EInfo> actionE = new FunctionAction("actionE");
+        actionE.setAction((d) -> {
+            d.say();
+            return fetchE(actionE.getProp(0, String.class));
         });
 
         // 添加到容器
@@ -41,7 +50,7 @@ public class ActionTest {
                 .call("actionA", "actionB")
                 .callOfParam("actionC", getFuture("actionA"), getFuture("actionB"), "name-c")
                 .andThen("actionD")
-                .andThen("actionE")
+                .andThen("actionE", "name-e")
                 .closeBranch();
 
         EInfo e = (EInfo) result.get();
@@ -87,11 +96,12 @@ public class ActionTest {
         }
     }
 
-    public static EInfo fetchE(DInfo dInfo) {
+    public static EInfo fetchE(String name) {
         try {
-            dInfo.say();
             Thread.sleep(500);
-            return new EInfo();
+            EInfo eInfo = new EInfo();
+            eInfo.setName(name);
+            return eInfo;
         } catch (InterruptedException e) {
             throw new RuntimeException("E Exception");
         }

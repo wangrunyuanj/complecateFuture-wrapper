@@ -12,4 +12,6 @@ public interface Action {
     Object[] getProps();
 
     void setProps(Object... props);
+
+    <U> U getProp(int index, Class<U> type);
 }
