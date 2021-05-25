@@ -31,7 +31,7 @@ public class ActionDefinitionContainer {
         if (actions == null) {
             throw new RuntimeException("Action is null!");
         }
-        // name不能重复
+
         Arrays.stream(actions).forEach((action) -> {
             validateAction(action);
             this.suppliers.put(action.getName(), action);
@@ -40,7 +40,10 @@ public class ActionDefinitionContainer {
     }
 
     public ActionDefinitionContainer addFunction(FunctionAction... actions) {
-        // name不能重复
+        if (actions == null) {
+            throw new RuntimeException("Action is null!");
+        }
+
         Arrays.stream(actions).forEach((action) -> {
             validateAction(action);
             this.functions.put(action.getName(), action);
@@ -131,5 +134,14 @@ public class ActionDefinitionContainer {
         CompletableFuture future = this.results.get(lastAction.getName());
         this.lastAction = null;
         return future;
+    }
+
+    public void removeAction(String name) {
+        if (lastAction.getName().equals(name)) {
+            throw new RuntimeException("Action " + name + " can not remove");
+        }
+        this.results.remove(name);
+        this.suppliers.remove(name);
+        this.functions.remove(name);
     }
 }

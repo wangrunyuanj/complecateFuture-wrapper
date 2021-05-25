@@ -25,14 +25,6 @@ public class SupplierAction<T> implements Action {
         this.action = supplier;
     }
 
-    public <U> U getProp(int index, Class<U> type) {
-        if (props != null && props.length > index) {
-            return TransformUtil.convert(props[index], type);
-        } else {
-            throw new IndexOutOfBoundsException("Action " + name + " param index out of range!");
-        }
-    }
-
     private void setName(String name) {
         if (StringUtils.isBlank(name)) {
             throw new RuntimeException("Name can not be empty");
@@ -41,6 +33,14 @@ public class SupplierAction<T> implements Action {
             throw new RuntimeException("Name can not start with " + GET_ACTION_FUTURE);
         }
         this.name = name.trim();
+    }
+
+    public <U> U getProp(int index, Class<U> type) {
+        if (props != null && props.length > index) {
+            return TransformUtil.convert(props[index], type);
+        } else {
+            throw new IndexOutOfBoundsException("Action " + name + " param index out of range! index: " + index);
+        }
     }
 
 }

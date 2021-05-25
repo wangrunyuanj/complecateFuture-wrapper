@@ -103,4 +103,8 @@ public class ActionActuator {
         }
         return null;
     }
+
+    public void removeAction(String name) {
+        this.container.removeAction(name);
+    }
 }

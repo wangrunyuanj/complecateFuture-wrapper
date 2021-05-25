@@ -1,5 +1,5 @@
 ## complecateFuture-wrapper
-分离 action 与 callback
+分离 action 与 callback, 用简洁的方式处理异步操作树. 只需要.call(name) .then(name, before) .anyOf(name, ...before)的组合就能轻松完成业务逻辑.
 
 ### Definition Callback
 ```$xslt

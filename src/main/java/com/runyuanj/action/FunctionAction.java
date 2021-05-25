@@ -39,7 +39,7 @@ public class FunctionAction<T, R> implements Action {
         if (props != null && props.length > index) {
             return TransformUtil.convert(props[index], type);
         } else {
-            throw new IndexOutOfBoundsException("Action " + name + " param index out of range!");
+            throw new IndexOutOfBoundsException("Action " + name + " param index out of range! index: " + index);
         }
     }
 }
