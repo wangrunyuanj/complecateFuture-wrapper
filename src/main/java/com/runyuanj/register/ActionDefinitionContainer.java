@@ -144,4 +144,12 @@ public class ActionDefinitionContainer {
         this.suppliers.remove(name);
         this.functions.remove(name);
     }
+
+    public Action getUncheckedAction(String name) {
+        if (suppliers.containsKey(name)) {
+            return getSupplierAction(name);
+        } else {
+            return getFunctionAction(name);
+        }
+    }
 }

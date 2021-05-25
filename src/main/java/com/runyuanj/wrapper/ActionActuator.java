@@ -140,4 +140,54 @@ public class ActionActuator {
         container.setLastAction(action);
         return this;
     }
+
+    /**
+     * 用法:
+     * anyOfParam().oneOf().async()
+     * anyOfParam().oneOf().sync()
+     *
+     * Action:
+     * FunctionAction action = new FunctionAction("actionA")
+     *
+     * Action function:
+     * (preResult) -> {
+     *     preResult.doSomething()
+     *     // do(str1, str2, preResult)
+     *     do(action.getProp(0, String.class), action.getProp(1, String.class), preResult)
+     * }
+     *
+     * ActionActuator:
+     * .call("preAction1", "preAction2")
+     * .anyOfParam("actionA", "str1", "str2").oneOf("preAction1", "preAction2").sync()
+     * .closeBranch()
+     *
+     * @param name
+     * @param props
+     * @return
+     */
+    public ActionActuator anyOfParam(String name, Object ...props) {
+        Action action = container.getUncheckedAction(name);
+        action.setProps(props);
+        container.setLastAction(action);
+        return this;
+    }
+
+    public ActionActuator with(String ...names) {
+        CompletableFuture[] preFutures = new CompletableFuture[names.length];
+        Arrays.stream(names).map((name) -> this.container.getResult(name)).collect(Collectors.toList()).toArray(preFutures);
+        CompletableFuture<Object> future = CompletableFuture.anyOf(preFutures);
+        this.container.saveResults(this.container.getLastAction().getName(), future);
+        return this;
+    }
+
+    public ActionActuator sync() {
+        Action anyOfAction = this.container.getLastAction();
+        CompletableFuture future = this.container.getResult(anyOfAction.getName());
+        // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
+        if (anyOfAction instanceof FunctionAction) {
+             future.thenApply(((FunctionAction) anyOfAction).getAction());
+        }
+        container.saveResults(anyOfAction.getName(), future);
+        return this;
+    }
 }
