@@ -172,7 +172,7 @@ public class ActionActuator {
         return this;
     }
 
-    public ActionActuator with(String ...names) {
+    public ActionActuator oneOf(String ...names) {
         CompletableFuture[] preFutures = new CompletableFuture[names.length];
         Arrays.stream(names).map((name) -> this.container.getResult(name)).collect(Collectors.toList()).toArray(preFutures);
         CompletableFuture<Object> future = CompletableFuture.anyOf(preFutures);

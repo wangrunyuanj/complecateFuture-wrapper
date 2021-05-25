@@ -30,7 +30,8 @@ public class ActionAnyOfTest {
         container.addSupplier(actionA, actionB).addFunction(actionC);
 
         CompletableFuture future = ActionActuator.build(container).call("actionA", "actionB")
-                .anyOfParam("actionC").with("actionA", "actionB").sync()
+                // .anyOf("actionC", "actionA", "actionB")
+                .anyOfParam("actionC").oneOf("actionA", "actionB").sync()
                 .closeBranch();
 
         DInfo d = (DInfo) future.get();
