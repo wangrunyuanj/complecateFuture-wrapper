@@ -12,7 +12,9 @@ import java.util.concurrent.ExecutionException;
 import static com.runyuanj.util.ActionUtil.GET_ACTION_FUTURE;
 
 /**
- * 封装CompletableFuture
+ * Action执行器
+ * 封装CompletableFuture 与 ActionDefinitionContainer
+ *
  */
 public class ActionActuator {
 
