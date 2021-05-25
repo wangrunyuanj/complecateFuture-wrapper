@@ -63,11 +63,11 @@ public class ActionDefinitionContainer {
         }
     }
 
-    public FunctionAction getThenAction(String name) {
+    public FunctionAction getFunctionAction(String name) {
         return this.validateAndGetFunctionAction(name);
     }
 
-    public SupplierAction getCallAction(String name) {
+    public SupplierAction getSupplierAction(String name) {
         return this.validateAndGetSupplierAction(name);
     }
 
