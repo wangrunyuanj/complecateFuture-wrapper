@@ -3,22 +3,27 @@
 
 ### Definition Callback
 ```$xslt
-    // 定义Action
-    SupplierAction<AInfo> actionA = new SupplierAction<>("actionA", () -> fetchA());
-    SupplierAction<BInfo> actionB = new SupplierAction<>("actionB", () -> fetchB());
-    
-    SupplierAction actionC = new SupplierAction("actionC");
-    // fetchC(): a.say(), b.say()
-    actionC.setAction(() -> fetchC((AInfo) actionC.getProps()[0], (BInfo) actionC.getProps()[1], (String) actionC.getProps()[2]));
-    
-    FunctionAction actionD = new FunctionAction("actionD", (info) -> {
-        CInfo c = (CInfo) info;
+    // 定义Action, 不需要带泛型
+    SupplierAction actionA = new SupplierAction<>("actionA", () -> fetchA());
+    SupplierAction actionB = new SupplierAction<>("actionB", () -> fetchB());
+
+    SupplierAction<CInfo> actionC = new SupplierAction("actionC");
+    actionC.setAction(() -> fetchC(
+            // fetchC(): a.say(), b.say()
+            actionC.getProp(0, AInfo.class),
+            actionC.getProp(1, BInfo.class),
+            actionC.getProp(2, String.class)
+    ));
+
+    FunctionAction actionD = new FunctionAction<CInfo, DInfo>("actionD", (c) -> {
         c.say();
         return fetchD();
     });
-    FunctionAction actionE = new FunctionAction("actionE", (info) -> {
-        DInfo d = (DInfo) info;
-        return fetchE(d); // d.say()
+
+    FunctionAction<DInfo, EInfo> actionE = new FunctionAction("actionE");
+    actionE.setAction((d) -> {
+        d.say();
+        return fetchE(actionE.getProp(0, String.class));
     });
 ```
 
@@ -32,12 +37,12 @@
 ### Definition action sequence
 ```$xslt
     // 执行
-    CompletableFuture result = ActuatorWrapper.build(container)
+    CompletableFuture result = ActionActuator.build(container)
             .call("actionA", "actionB")
             .callOfParam("actionC", getFuture("actionA"), getFuture("actionB"), "name-c")
             .andThen("actionD")
-            .andThen("actionE")
-            .close();
+            .andThen("actionE", "name-e")
+            .closeBranch();
 
     EInfo e = (EInfo) result.get();
     e.say();
@@ -49,5 +54,5 @@ This is A
 This is B
 This is name-c
 This is D
-This is E
+This is name-e
 ```
