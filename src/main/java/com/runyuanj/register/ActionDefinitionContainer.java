@@ -168,7 +168,6 @@ public class ActionDefinitionContainer {
     }
 
     /**
-     *
      * @return
      */
     public CompletableFuture closeBranch() {
@@ -193,7 +192,7 @@ public class ActionDefinitionContainer {
     public Action getUncheckedAction(String name) {
         if (suppliers.containsKey(name)) {
             return getSupplierAction(name);
-        } else if (functions.containsKey(name)){
+        } else if (functions.containsKey(name)) {
             return getFunctionAction(name);
         } else {
             return getConsumerAction(name);

@@ -19,13 +19,13 @@ public class SupplierAction<T> implements Action {
         this.props = deepCopy(props);
     }
 
-    private Object[] deepCopy(Object[] props) {
-        return props;
-    }
-
     public SupplierAction(String name, Supplier<T> supplier) {
         setName(name);
         this.action = supplier;
+    }
+
+    private Object[] deepCopy(Object[] props) {
+        return props;
     }
 
     private void setName(String name) {

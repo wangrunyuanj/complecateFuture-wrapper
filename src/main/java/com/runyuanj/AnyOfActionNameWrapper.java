@@ -1,4 +1,4 @@
-package com.runyuanj.wrapper;
+package com.runyuanj;
 
 import lombok.Data;
 
@@ -7,9 +7,9 @@ import static com.runyuanj.util.ActionUtil.validateActionName;
 @Data
 public class AnyOfActionNameWrapper {
 
-    public AnyOfActionNameWrapper(String name) {
-        this.name = validateActionName(name);;
-    }
-
     private String name;
+
+    public AnyOfActionNameWrapper(String name) {
+        this.name = validateActionName(name);
+    }
 }

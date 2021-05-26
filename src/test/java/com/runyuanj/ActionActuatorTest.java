@@ -1,11 +1,10 @@
-package com.runyuanj.wrapper;
+package com.runyuanj;
 
 import com.runyuanj.action.ConsumerAction;
 import com.runyuanj.action.FunctionAction;
 import com.runyuanj.action.SupplierAction;
 import com.runyuanj.model.*;
 import com.runyuanj.register.ActionDefinitionContainer;
-import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -73,7 +72,7 @@ public class ActionActuatorTest {
     }
 
     @Test
-    public void testThen2() throws ExecutionException, InterruptedException  {
+    public void testThen2() throws ExecutionException, InterruptedException {
         // 定义Action, 不需要带泛型
         SupplierAction actionA = new SupplierAction<>("actionA", () -> fetchA());
         SupplierAction actionB = new SupplierAction<>("actionB", () -> fetchB());

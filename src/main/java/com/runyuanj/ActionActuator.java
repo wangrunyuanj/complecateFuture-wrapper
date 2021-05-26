@@ -1,4 +1,4 @@
-package com.runyuanj.wrapper;
+package com.runyuanj;
 
 import com.runyuanj.action.Action;
 import com.runyuanj.action.ConsumerAction;
@@ -7,25 +7,20 @@ import com.runyuanj.action.SupplierAction;
 import com.runyuanj.register.ActionDefinitionContainer;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static com.runyuanj.util.ActionUtil.GET_ACTION_FUTURE;
 
 /**
  * Action执行器
  * 封装CompletableFuture 与 ActionDefinitionContainer
- *
  */
 public class ActionActuator {
 
     private ActionDefinitionContainer container;
 
-    private ActionActuator() {}
+    private ActionActuator() {
+    }
 
     public static ActionActuator build(ActionDefinitionContainer container) {
         ActionActuator actuator = new ActionActuator();
@@ -70,7 +65,7 @@ public class ActionActuator {
             resultFuture = future.thenApplyAsync(((FunctionAction) action).getAction());
         } else if (action instanceof ConsumerAction) {
             resultFuture = future.thenAcceptAsync(((ConsumerAction) action).getAction());
-        } else if (action instanceof SupplierAction){
+        } else if (action instanceof SupplierAction) {
             resultFuture = CompletableFuture.supplyAsync(((SupplierAction) action).getAction());
         } else {
             throw new RuntimeException("Action is not a Function , Supplier or Consumer, please check your lambda");
@@ -157,7 +152,7 @@ public class ActionActuator {
      * @param before
      * @return
      */
-    public ActionActuator anyOf(String name, String ...before) {
+    public ActionActuator anyOf(String name, String... before) {
         return this.anyOfParam(name).oneOf(before).sync();
     }
 
@@ -165,17 +160,17 @@ public class ActionActuator {
      * 用法:
      * anyOfParam().oneOf().async()
      * anyOfParam().oneOf().sync()
-     *
+     * <p>
      * Action:
      * FunctionAction action = new FunctionAction("actionA")
-     *
+     * <p>
      * Action function:
      * (preResult) -> {
-     *     preResult.doSomething()
-     *     // do(str1, str2, preResult)
-     *     do(action.getProp(0, String.class), action.getProp(1, String.class), preResult)
+     * preResult.doSomething()
+     * // do(str1, str2, preResult)
+     * do(action.getProp(0, String.class), action.getProp(1, String.class), preResult)
      * }
-     *
+     * <p>
      * ActionActuator:
      * .call("preAction1", "preAction2")
      * .anyOfParam("actionA", "str1", "str2").oneOf("preAction1", "preAction2").sync()
@@ -185,14 +180,14 @@ public class ActionActuator {
      * @param props
      * @return
      */
-    public ActionActuator anyOfParam(String name, Object ...props) {
+    public ActionActuator anyOfParam(String name, Object... props) {
         Action action = container.getUncheckedAction(name);
         action.setProps(props);
         container.setLastAction(action);
         return this;
     }
 
-    public ActionActuator oneOf(String ...names) {
+    public ActionActuator oneOf(String... names) {
         CompletableFuture[] preFutures = new CompletableFuture[names.length];
         Arrays.stream(names).map((name) -> this.container.getResult(name)).collect(Collectors.toList()).toArray(preFutures);
         CompletableFuture<Object> future = CompletableFuture.anyOf(preFutures);
@@ -213,8 +208,8 @@ public class ActionActuator {
         CompletableFuture future = this.container.getResult(action.getName());
         // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
         if (action instanceof FunctionAction) {
-             future.thenApply(((FunctionAction) action).getAction());
-        } else if (action instanceof ConsumerAction){
+            future.thenApply(((FunctionAction) action).getAction());
+        } else if (action instanceof ConsumerAction) {
             future.thenAccept(((ConsumerAction) action).getAction());
         } else {
             throw new RuntimeException("Action " + action.getName() + " is not FunctionAction or ConsumerAction");
@@ -234,7 +229,7 @@ public class ActionActuator {
         // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
         if (action instanceof FunctionAction) {
             future.thenApplyAsync(((FunctionAction) action).getAction());
-        } else if (action instanceof ConsumerAction){
+        } else if (action instanceof ConsumerAction) {
             future.thenAcceptAsync(((ConsumerAction) action).getAction());
         } else {
             throw new RuntimeException("Action " + action.getName() + " is not FunctionAction or ConsumerAction");

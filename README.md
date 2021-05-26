@@ -68,12 +68,14 @@ This is D
 null
 This is D from action
 ```
-
+### anyOf
+![alt anyOf(consumer)](http://www.runyuanj.com/action/anyof_consumer.png)
 ![alt anyOf(function)](http://www.runyuanj.com/action/anyof_function.png)
 
-![alt anyOf(consumer)](http://www.runyuanj.com/action/anyof_consumer.png)
+C等待A,B其中任意一个完成, CompletableFuture要求anyOf的lambda必须使用Consumer或Function, 但是Function的返回值无效. 不知道是bug还是限制.
 
 ![alt anyOf-function-consumer](http://www.runyuanj.com/action/anyof-func-consumer.png)
 
+### allOf
 ![alt allOf-function](http://www.runyuanj.com/action/allof-function.png)
 
