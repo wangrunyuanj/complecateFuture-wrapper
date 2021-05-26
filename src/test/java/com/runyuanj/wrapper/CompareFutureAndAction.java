@@ -51,7 +51,7 @@ public class CompareFutureAndAction {
     }
 
     @Test
-    public void futureTest2() throws ExecutionException, InterruptedException, TimeoutException {
+    public void anyOfFutureTest() throws ExecutionException, InterruptedException, TimeoutException {
         CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
             AInfo aInfo = fetchA();
             aInfo.setName("from A");
@@ -87,7 +87,7 @@ public class CompareFutureAndAction {
     }
 
     @Test
-    public void futureTest3() throws ExecutionException, InterruptedException {
+    public void allOfFutureTest() throws ExecutionException, InterruptedException {
         CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
             AInfo aInfo = fetchA();
             System.out.println("A is down");
@@ -106,6 +106,35 @@ public class CompareFutureAndAction {
             return new CInfo();
         });
         c.join();
+    }
+
+    /**
+     * consumer在修改入参data后, 如果是sync(), 那么future.get()得到的结果是修改后的data
+     *
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
+    @Test
+    public void anyOfFutureTest2() throws ExecutionException, InterruptedException {
+        CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
+            AInfo aInfo = fetchA();
+            System.out.println("A is down");
+            return aInfo;
+        });
+        CompletableFuture<BInfo> b = CompletableFuture.supplyAsync(() -> {
+            BInfo bInfo = fetchB();
+            System.out.println("B is down");
+            return bInfo;
+        });
+
+        CompletableFuture c = CompletableFuture.anyOf(a, b);
+        c.thenAccept((data) -> {
+            AInfo aInfo = (AInfo) data;
+            aInfo.setName("new c");
+        });
+
+        AInfo aInfo = (AInfo) c.get();
+        aInfo.say();
     }
 
     @Test

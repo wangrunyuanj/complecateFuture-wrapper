@@ -2,6 +2,7 @@ package com.runyuanj.register;
 
 
 import com.runyuanj.action.Action;
+import com.runyuanj.action.ConsumerAction;
 import com.runyuanj.action.FunctionAction;
 import com.runyuanj.action.SupplierAction;
 
@@ -22,6 +23,8 @@ public class ActionDefinitionContainer {
     private Map<String, SupplierAction> suppliers = new HashMap<>();
 
     private Map<String, FunctionAction> functions = new HashMap<>();
+
+    private Map<String, ConsumerAction> consumers = new HashMap<>();
 
     private Map<String, CompletableFuture> results = new HashMap<>();
 
@@ -51,6 +54,18 @@ public class ActionDefinitionContainer {
         return this;
     }
 
+    public ActionDefinitionContainer addConsumer(ConsumerAction... actions) {
+        if (actions == null) {
+            throw new RuntimeException("Action is null!");
+        }
+
+        Arrays.stream(actions).forEach((action) -> {
+            validateAction(action);
+            this.consumers.put(action.getName(), action);
+        });
+        return this;
+    }
+
     private void validateAction(Action action) {
         if (action == null) {
             throw new RuntimeException("Action " + action.getName() + " can't be null");
@@ -60,6 +75,9 @@ public class ActionDefinitionContainer {
         }
         if (this.functions.containsKey(action.getName())) {
             throw new RuntimeException("FunctionAction " + action.getName() + " already exists");
+        }
+        if (this.consumers.containsKey(action.getName())) {
+            throw new RuntimeException("ConsumerAction " + action.getName() + " already exists");
         }
     }
 
@@ -71,10 +89,16 @@ public class ActionDefinitionContainer {
         return this.validateAndGetSupplierAction(name);
     }
 
+    public ConsumerAction getConsumerAction(String name) {
+        return this.validateAndGetConsumerAction(name);
+    }
+
     private FunctionAction validateAndGetFunctionAction(String name) {
         if (!functions.containsKey(name)) {
             if (suppliers.containsKey(name)) {
                 throw new RuntimeException("Action " + name + " is a SupplierAction!");
+            } else if (consumers.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a ConsumerAction!");
             }
             throw new RuntimeException("Action " + name + " not in container");
         } else {
@@ -91,10 +115,30 @@ public class ActionDefinitionContainer {
         if (!suppliers.containsKey(name)) {
             if (functions.containsKey(name)) {
                 throw new RuntimeException("Action " + name + " is a FunctionAction!");
+            } else if (consumers.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a ConsumerAction!");
             }
             throw new RuntimeException("Action " + name + " not in container");
         } else {
             SupplierAction action = suppliers.get(name);
+            if (action == null) {
+                throw new RuntimeException("Action " + name + " is null");
+            } else {
+                return action;
+            }
+        }
+    }
+
+    private ConsumerAction validateAndGetConsumerAction(String name) {
+        if (!consumers.containsKey(name)) {
+            if (functions.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a FunctionAction!");
+            } else if (suppliers.containsKey(name)) {
+                throw new RuntimeException("Action " + name + " is a SupplierAction!");
+            }
+            throw new RuntimeException("Action " + name + " not in container");
+        } else {
+            ConsumerAction action = consumers.get(name);
             if (action == null) {
                 throw new RuntimeException("Action " + name + " is null");
             } else {
@@ -143,13 +187,16 @@ public class ActionDefinitionContainer {
         this.results.remove(name);
         this.suppliers.remove(name);
         this.functions.remove(name);
+        this.consumers.remove(name);
     }
 
     public Action getUncheckedAction(String name) {
         if (suppliers.containsKey(name)) {
             return getSupplierAction(name);
-        } else {
+        } else if (functions.containsKey(name)){
             return getFunctionAction(name);
+        } else {
+            return getConsumerAction(name);
         }
     }
 }

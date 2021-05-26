@@ -3,23 +3,23 @@ package com.runyuanj.action;
 import com.runyuanj.util.TransformUtil;
 import lombok.Data;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import static com.runyuanj.util.ActionUtil.validateActionName;
 
 @Data
-public class FunctionAction<T, R> implements Action {
+public class ConsumerAction<T> implements Action {
 
     private String name;
-    private Function<T, R> action;
+    private Consumer<T> action;
     private Object[] props;
 
-    public FunctionAction(String name, Function<T, R> action) {
+    public ConsumerAction(String name, Consumer<T> action) {
         setName(name);
         this.action = action;
     }
 
-    public FunctionAction(String name, Object... props) {
+    public ConsumerAction(String name, Object... props) {
         setName(name);
         this.props = deepCopy(props);
     }

@@ -1,6 +1,7 @@
 package com.runyuanj.wrapper;
 
 import com.runyuanj.action.Action;
+import com.runyuanj.action.ConsumerAction;
 import com.runyuanj.action.FunctionAction;
 import com.runyuanj.action.SupplierAction;
 import com.runyuanj.register.ActionDefinitionContainer;
@@ -9,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.runyuanj.util.ActionUtil.GET_ACTION_FUTURE;
@@ -59,10 +62,20 @@ public class ActionActuator {
 
     public ActionActuator then(String then, String before, Object... props) {
         CompletableFuture future = container.getFuture(before);
-        FunctionAction action = container.getFunctionAction(then);
+        Action action = container.getUncheckedAction(then);
         action.setProps(props);
 
-        CompletableFuture resultFuture = future.thenApplyAsync(action.getAction());
+        CompletableFuture resultFuture;
+        if (action instanceof FunctionAction) {
+            resultFuture = future.thenApplyAsync(((FunctionAction) action).getAction());
+        } else if (action instanceof ConsumerAction) {
+            resultFuture = future.thenAcceptAsync(((ConsumerAction) action).getAction());
+        } else if (action instanceof SupplierAction){
+            resultFuture = CompletableFuture.supplyAsync(((SupplierAction) action).getAction());
+        } else {
+            throw new RuntimeException("Action is not a Function , Supplier or Consumer, please check your lambda");
+        }
+
         container.saveResults(then, resultFuture);
         container.setLastAction(action);
         return this;
@@ -118,6 +131,12 @@ public class ActionActuator {
         return container.getResult(name);
     }
 
+    /**
+     * 清除最后一个游标, 并返回future
+     * 但是不会清除action中的props.
+     *
+     * @return
+     */
     public CompletableFuture closeBranch() {
         if (container != null) {
             return container.closeBranch();
@@ -190,16 +209,17 @@ public class ActionActuator {
      * @return
      */
     public ActionActuator sync() {
-        Action anyOfAction = this.container.getLastAction();
-        CompletableFuture future = this.container.getResult(anyOfAction.getName());
+        Action action = this.container.getLastAction();
+        CompletableFuture future = this.container.getResult(action.getName());
         // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
-        if (anyOfAction instanceof FunctionAction) {
-             future.thenApply(((FunctionAction) anyOfAction).getAction());
+        if (action instanceof FunctionAction) {
+             future.thenApply(((FunctionAction) action).getAction());
+        } else if (action instanceof ConsumerAction){
+            future.thenAccept(((ConsumerAction) action).getAction());
+        } else {
+            throw new RuntimeException("Action " + action.getName() + " is not FunctionAction or ConsumerAction");
         }
-//        else if (anyOfAction instanceof ConsumerAction){
-//            future.then(((ConsumerAction) anyOfAction).getAction());
-//        }
-        container.saveResults(anyOfAction.getName(), future);
+        container.saveResults(action.getName(), future);
         return this;
     }
 
@@ -209,16 +229,17 @@ public class ActionActuator {
      * @return
      */
     public ActionActuator async() {
-        Action anyOfAction = this.container.getLastAction();
-        CompletableFuture future = this.container.getResult(anyOfAction.getName());
+        Action action = this.container.getLastAction();
+        CompletableFuture future = this.container.getResult(action.getName());
         // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
-        if (anyOfAction instanceof FunctionAction) {
-            future.thenApplyAsync(((FunctionAction) anyOfAction).getAction());
+        if (action instanceof FunctionAction) {
+            future.thenApplyAsync(((FunctionAction) action).getAction());
+        } else if (action instanceof ConsumerAction){
+            future.thenAcceptAsync(((ConsumerAction) action).getAction());
+        } else {
+            throw new RuntimeException("Action " + action.getName() + " is not FunctionAction or ConsumerAction");
         }
-//        else if (anyOfAction instanceof ConsumerAction){
-//            future.then(((ConsumerAction) anyOfAction).getAction());
-//        }
-        container.saveResults(anyOfAction.getName(), future);
+        container.saveResults(action.getName(), future);
         return this;
     }
 }
