@@ -17,34 +17,58 @@ import static com.runyuanj.util.ActionUtil.getAnyOf;
 public class ActionAnyOfTest {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
+//        CompletableFuture a = CompletableFuture.supplyAsync(() -> searchC("actionA"));
+//        CompletableFuture b = CompletableFuture.supplyAsync(() -> searchC("actionB"));
+//
+//        // anyOf 只返回一个data
+//        CompletableFuture c = CompletableFuture.anyOf(a, b);
+//        c.thenApplyAsync((data) -> {
+//            CInfo cInfo = (CInfo) data;
+//            cInfo.say();
+//            cInfo.setName("?????"); // ??????????????????????????
+//            return new DInfo(); // ??????????????????????????
+//        });
+//
+//        CInfo rc = (CInfo) c.get();
+//        rc.say();
+
+//        Thread.sleep(3000);
+
+
         // 定义Action, 不需要带泛型
-        SupplierAction actionA = new SupplierAction<>("actionA", () -> searchD("actionA"));
-        SupplierAction actionB = new SupplierAction<>("actionB", () -> searchD("actionB"));
+        SupplierAction actionA = new SupplierAction<>("actionA", () -> searchC("actionA"));
+        SupplierAction actionB = new SupplierAction<>("actionB", () -> searchC("actionB"));
 
         // lambda的调用主体必须带泛型
         // <CInfo> in left is necessary
-        FunctionAction<DInfo, CInfo> actionC = new FunctionAction("actionC");
-        actionC.setAction((data) -> fetchC(data.getName()));
+        FunctionAction actionC = new FunctionAction("actionC");
+        actionC.setAction((data) -> {
+            CInfo cInfo = (CInfo) data;
+            cInfo.say();
+            cInfo.setName("?????"); // ??????????????????????????
+            return new DInfo(); // ??????????????????????????
+        });
 
         ActionDefinitionContainer container = new ActionDefinitionContainer();
         container.addSupplier(actionA, actionB).addFunction(actionC);
 
         CompletableFuture future = ActionActuator.build(container).call("actionA", "actionB")
-                // .anyOf("actionC", "actionA", "actionB")
-                .anyOfParam("actionC").oneOf("actionA", "actionB").sync()
+                // .anyOf("actionD", "actionA", "actionB")
+                .anyOfParam("actionC").oneOf("actionA", "actionB").async()
                 .closeBranch();
 
-        DInfo d = (DInfo) future.get();
-        d.say();
+        CInfo c = (CInfo) future.get();
+        c.say();
     }
 
 
-    public static DInfo searchD(String from) {
+    public static CInfo searchC(String from) {
         try {
             Thread.sleep(1000);
-            DInfo dInfo = new DInfo();
-            dInfo.setName("D from " + from);
-            return dInfo;
+            CInfo c = new CInfo();
+            c.setName("C from " + from);
+            System.out.println(from + " executed");
+            return c;
         } catch (InterruptedException e) {
             throw new RuntimeException("A Exception");
         }
@@ -53,16 +77,17 @@ public class ActionAnyOfTest {
     public static CInfo fetchC(String name) {
         try {
             Thread.sleep(500);
-            System.out.println(name);
+            System.out.println("In fetchC: " + name);
             return new CInfo();
         } catch (InterruptedException e) {
             throw new RuntimeException("E Exception");
         }
     }
 
-    public static DInfo fetchD() {
+    public static DInfo fetchD(String name) {
         try {
-            Thread.sleep(100);
+            Thread.sleep(500);
+            System.out.println("search Result: " + name);
             return new DInfo();
         } catch (InterruptedException e) {
             throw new RuntimeException("D Exception");

@@ -187,6 +187,23 @@ public class ActionActuator {
         if (anyOfAction instanceof FunctionAction) {
              future.thenApply(((FunctionAction) anyOfAction).getAction());
         }
+//        else if (anyOfAction instanceof ConsumerAction){
+//            future.then(((ConsumerAction) anyOfAction).getAction());
+//        }
+        container.saveResults(anyOfAction.getName(), future);
+        return this;
+    }
+
+    public ActionActuator async() {
+        Action anyOfAction = this.container.getLastAction();
+        CompletableFuture future = this.container.getResult(anyOfAction.getName());
+        // 假设FunctionAction只接收preFutures的返回值并不做额外处理, 并且在此处同步等待结果
+        if (anyOfAction instanceof FunctionAction) {
+            future.thenApplyAsync(((FunctionAction) anyOfAction).getAction());
+        }
+//        else if (anyOfAction instanceof ConsumerAction){
+//            future.then(((ConsumerAction) anyOfAction).getAction());
+//        }
         container.saveResults(anyOfAction.getName(), future);
         return this;
     }
