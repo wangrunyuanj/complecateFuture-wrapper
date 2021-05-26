@@ -129,16 +129,17 @@ public class ActionActuator {
         this.container.removeAction(name);
     }
 
+    /**
+     * 接收before的返回数据data并等待action执行完成, 将最终的data返回.
+     * data可能在action执行过程中改变
+     * 默认使用同步的方式处理, 保证future.get()的结果符合预期
+     *
+     * @param name
+     * @param before
+     * @return
+     */
     public ActionActuator anyOf(String name, String ...before) {
-        FunctionAction action = container.getFunctionAction(name);
-        CompletableFuture[] f = new CompletableFuture[before.length];
-        Arrays.stream(before).map((actionName) -> container.getResult(actionName)).collect(Collectors.toList()).toArray(f);
-
-        CompletableFuture future = CompletableFuture.anyOf(f);
-        future.thenApply(action.getAction());
-        container.saveResults(name, future);
-        container.setLastAction(action);
-        return this;
+        return this.anyOfParam(name).oneOf(before).sync();
     }
 
     /**
@@ -180,6 +181,14 @@ public class ActionActuator {
         return this;
     }
 
+    /**
+     * 当action的入参data可能被改变时, 必须使用sync
+     * 在action执行完成前阻塞, 保证future.get()的结果data符合预期
+     * 否则data会可能发生不可预知的变化.
+     * 当data不可变时, 可以使用async()
+     *
+     * @return
+     */
     public ActionActuator sync() {
         Action anyOfAction = this.container.getLastAction();
         CompletableFuture future = this.container.getResult(anyOfAction.getName());
@@ -194,6 +203,11 @@ public class ActionActuator {
         return this;
     }
 
+    /**
+     * 当入参data不改变时, 异步执行action并立刻返回data
+     *
+     * @return
+     */
     public ActionActuator async() {
         Action anyOfAction = this.container.getLastAction();
         CompletableFuture future = this.container.getResult(anyOfAction.getName());
