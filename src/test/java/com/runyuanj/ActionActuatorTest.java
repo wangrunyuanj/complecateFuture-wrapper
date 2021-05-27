@@ -6,13 +6,43 @@ import com.runyuanj.action.SupplierAction;
 import com.runyuanj.model.*;
 import com.runyuanj.register.ActionDefinitionContainer;
 import org.junit.jupiter.api.Test;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.HotspotMemoryProfiler;
+import org.openjdk.jmh.profile.HotspotThreadProfiler;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static com.runyuanj.util.ActionUtil.getFuture;
 
+@BenchmarkMode(Mode.AverageTime)
+@State(Scope.Thread)
+@Fork(1)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 3)
+@Measurement(iterations = 5)
 public class ActionActuatorTest {
+
+    /**
+     * 注释掉方法的@Test后运行性能测试
+     * @param args
+     * @throws RunnerException
+     */
+    public static void main(String[] args) throws RunnerException {
+        Options opt = new OptionsBuilder()
+                .include(ActionActuatorTest.class.getSimpleName())
+                .addProfiler(HotspotMemoryProfiler.class)
+                .addProfiler(HotspotThreadProfiler.class)
+                .addProfiler(StackProfiler.class)
+                .build();
+        new Runner(opt).run();
+    }
 
     /**
      * http://www.runyuanj.com/action/supplier-func-consumer.png
@@ -20,7 +50,8 @@ public class ActionActuatorTest {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    @Test
+    // @Test
+    @Benchmark
     public void testThen() throws ExecutionException, InterruptedException {
         // 定义Action, 不需要带泛型
         SupplierAction actionA = new SupplierAction<>("actionA", () -> fetchA());
@@ -71,7 +102,7 @@ public class ActionActuatorTest {
         dInfo.say(); // This is D from actionE
     }
 
-    @Test
+    // @Test
     public void testThen2() throws ExecutionException, InterruptedException {
         // 定义Action, 不需要带泛型
         SupplierAction actionA = new SupplierAction<>("actionA", () -> fetchA());
@@ -129,7 +160,7 @@ public class ActionActuatorTest {
         }
     }
 
-    @Test
+    // @Test
     public void testAnyOf() throws ExecutionException, InterruptedException {
         SupplierAction actionA = new SupplierAction<>("actionA", () -> searchC("actionA"));
         SupplierAction actionB = new SupplierAction<>("actionB", () -> searchC("actionB"));
@@ -141,6 +172,7 @@ public class ActionActuatorTest {
 //            cInfo.setName("?????");
 //        });
         FunctionAction actionC = new FunctionAction("actionC");
+        // anyOf 可以不设置action属性 或设为null
         actionC.setAction((data) -> {
             CInfo cInfo = (CInfo) data;
             cInfo.say();
@@ -157,7 +189,6 @@ public class ActionActuatorTest {
 
         CInfo c = (CInfo) future.get();
         c.say();
-        System.out.println(c);
         Thread.sleep(2000);
     }
 

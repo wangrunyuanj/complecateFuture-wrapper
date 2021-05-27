@@ -5,91 +5,69 @@ import com.runyuanj.action.SupplierAction;
 import com.runyuanj.model.*;
 import com.runyuanj.register.ActionDefinitionContainer;
 import org.junit.jupiter.api.Test;
+import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.HotspotMemoryProfiler;
+import org.openjdk.jmh.profile.HotspotThreadProfiler;
+import org.openjdk.jmh.profile.StackProfiler;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static com.runyuanj.util.ActionUtil.getFuture;
 
+@BenchmarkMode(Mode.AverageTime)
+@State(Scope.Thread)
+@Fork(1)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 3)
+@Measurement(iterations = 5)
 public class CompareFutureAndAction {
 
-    public static AInfo fetchA() {
-        try {
-            Thread.sleep(1000);
-            return new AInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("A Exception");
-        }
+    /**
+     * futureTest 与 actionTest 占用内存和时间几乎相等
+     *
+     * @param args
+     * @throws RunnerException
+     */
+    public static void main(String[] args) throws RunnerException {
+        Options opt = new OptionsBuilder()
+                .include(CompareFutureAndAction.class.getSimpleName())
+                .addProfiler(HotspotMemoryProfiler.class)
+//                .addProfiler(HotspotThreadProfiler.class)
+//                .addProfiler(StackProfiler.class)
+                .build();
+        new Runner(opt).run();
     }
 
-    public static BInfo fetchB() {
-        try {
-            Thread.sleep(1000);
-            return new BInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("B Exception");
-        }
+    // @Test
+    @Benchmark
+    public void futureTest() throws ExecutionException, InterruptedException {
+        CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> fetchA());
+        CompletableFuture<BInfo> b = CompletableFuture.supplyAsync(() -> fetchB());
+
+        AInfo aInfo = a.get();
+        BInfo bInfo = b.get();
+        CompletableFuture<CInfo> c = CompletableFuture.supplyAsync(() -> fetchC(aInfo, bInfo, "name-c"));
+        CompletableFuture<DInfo> d = c.thenApplyAsync(cInfo -> {
+            cInfo.say();
+            return fetchD();
+        });
+
+        DInfo dInfo = d.get();
+        CompletableFuture<EInfo> e = CompletableFuture.supplyAsync(() -> fetchE(dInfo));
+
+        EInfo eInfo = e.get();
+        eInfo.say();
     }
 
-    public static CInfo fetchC(AInfo a, BInfo b, String name) {
-        try {
-            a.say();
-            b.say();
-            Thread.sleep(2000);
-            return new CInfo(name);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("C Exception");
-        }
-    }
-
-    public static DInfo fetchD() {
-        try {
-            Thread.sleep(100);
-            return new DInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("D Exception");
-        }
-    }
-
-    public static EInfo fetchE(DInfo dInfo) {
-        try {
-            dInfo.say();
-            Thread.sleep(500);
-            return new EInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("E Exception");
-        }
-    }
-
-    public static FInfo fetchF() {
-        try {
-            Thread.sleep(500);
-            return new FInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("F Exception");
-        }
-    }
-
-    public static MInfo fetchM(String name) {
-        try {
-            Thread.sleep(100);
-            return new MInfo(name);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("M Exception");
-        }
-    }
-
-    public static NInfo fetchN() {
-        try {
-            Thread.sleep(100);
-            return new NInfo();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("N Exception");
-        }
-    }
-
-    @Test
+    // @Test
+    @Benchmark
     public void actionTest() throws ExecutionException, InterruptedException {
         // 定义Action
         SupplierAction<AInfo> actionA = new SupplierAction<>("actionA", () -> fetchA());
@@ -125,7 +103,7 @@ public class CompareFutureAndAction {
         e.say();
     }
 
-    @Test
+    // @Test
     public void anyOfFutureTest() throws ExecutionException, InterruptedException, TimeoutException {
         CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
             AInfo aInfo = fetchA();
@@ -161,7 +139,7 @@ public class CompareFutureAndAction {
         dInfo.say();
     }
 
-    @Test
+    // @Test
     public void allOfFutureTest() throws ExecutionException, InterruptedException {
         CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
             AInfo aInfo = fetchA();
@@ -189,7 +167,7 @@ public class CompareFutureAndAction {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    @Test
+    // @Test
     public void anyOfFutureTest2() throws ExecutionException, InterruptedException {
         CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> {
             AInfo aInfo = fetchA();
@@ -212,28 +190,78 @@ public class CompareFutureAndAction {
         aInfo.say();
     }
 
-    @Test
-    public void futureTest() throws ExecutionException, InterruptedException {
-        CompletableFuture<AInfo> a = CompletableFuture.supplyAsync(() -> fetchA());
-        CompletableFuture<BInfo> b = CompletableFuture.supplyAsync(() -> fetchB());
-
-        AInfo aInfo = a.get();
-        BInfo bInfo = b.get();
-        CompletableFuture<CInfo> c = CompletableFuture.supplyAsync(() -> fetchC(aInfo, bInfo, "name-c"));
-        CompletableFuture<DInfo> d = c.thenApplyAsync(cInfo -> {
-            cInfo.say();
-            return fetchD();
-        });
-
-        DInfo dInfo = d.get();
-        CompletableFuture<EInfo> e = CompletableFuture.supplyAsync(() -> fetchE(dInfo));
-
-        EInfo eInfo = e.get();
-        CompletableFuture<FInfo> f = CompletableFuture.supplyAsync(() -> {
-            eInfo.say();
-            return fetchF();
-        });
-        f.get().say();
+    public static AInfo fetchA() {
+        try {
+            Thread.sleep(200);
+            return new AInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("A Exception");
+        }
     }
 
+    public static BInfo fetchB() {
+        try {
+            Thread.sleep(200);
+            return new BInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("B Exception");
+        }
+    }
+
+    public static CInfo fetchC(AInfo a, BInfo b, String name) {
+        try {
+            a.say();
+            b.say();
+            Thread.sleep(200);
+            return new CInfo(name);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("C Exception");
+        }
+    }
+
+    public static DInfo fetchD() {
+        try {
+            Thread.sleep(100);
+            return new DInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("D Exception");
+        }
+    }
+
+    public static EInfo fetchE(DInfo dInfo) {
+        try {
+            dInfo.say();
+            Thread.sleep(200);
+            return new EInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("E Exception");
+        }
+    }
+
+    public static FInfo fetchF() {
+        try {
+            Thread.sleep(200);
+            return new FInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("F Exception");
+        }
+    }
+
+    public static MInfo fetchM(String name) {
+        try {
+            Thread.sleep(100);
+            return new MInfo(name);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("M Exception");
+        }
+    }
+
+    public static NInfo fetchN() {
+        try {
+            Thread.sleep(100);
+            return new NInfo();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("N Exception");
+        }
+    }
 }
